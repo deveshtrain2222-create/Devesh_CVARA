@@ -1,1 +1,9 @@
+I used the CoinGecko public API (/simple/price and /coins/{id}/market_chart) to fetch live prices, 24-hour changes, 24-hour volumes and 7-day historical prices.
 
+Extracted: current USD price, 24h percent change, 24h volume, and 7-day price series for BTC, ETH and SOL.
+
+Visualizations turn complex crypto numbers into easy-to-understand pictures; making it simple to compare coins, track trends, and make decisions.
+for ex-Instead of reading:
+*BTC: 42,000 → 44,500 → 45,100
+*ETH: 2,200 → 2,150 → 2,300
+A line graph shows this as a rising or falling line — so we can understand it in 2 seconds.
