@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 #import streamlit as st
-data = pd.read_csv("crypto_prices1.csv")
+data = pd.read_csv("crypto_prices_1.csv")
 
 data['Date'] = pd.to_datetime(data['Date'])
 data.set_index('Date', inplace=True)
@@ -24,11 +24,15 @@ plt.title("Crypto Price Trend")
 plt.xlabel("Date")
 plt.ylabel("Price")
 plt.legend()
+plt.gcf().autofmt_xdate()  # Rotate date labels to fix overlap
 plt.show()
+
 plt.figure(figsize=(12,6))
 sns.histplot(data['Return'].dropna(), bins=50, kde=True)
 plt.title("Return Distribution")
 plt.xlabel("Return")
+
+
 #plt.ylabel("Frequency")
 plt.show()
 plt.figure(figsize=(12,6))
@@ -39,4 +43,4 @@ plt.title("Cumulative Return")
 plt.xlabel("Date")
 plt.ylabel("Cumulative Growth")
 plt.show()
-data.to_csv("crypto_analysis_output2.csv")
+data.to_csv("crypto_analysis_output.csv")
