@@ -1,139 +1,3 @@
-<!-- <!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Milestone 4 – Risk Classification</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body{
-  background:linear-gradient(135deg,#040b2c,#071a47,#001d3d);
-  color:white;
-  font-family:Arial;
-  padding:25px;
-}
-.layout{
-  display:grid;
-  grid-template-columns:1.2fr 2fr;
-  gap:30px;
-  max-width:1400px;
-  margin:auto;
-}
-.card{
-  background:rgba(255,255,255,0.07);
-  padding:20px;
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,0.12);
-  margin-bottom:20px;
-}
-.badge{
-  padding:10px;
-  border-radius:12px;
-  margin:8px 0;
-  font-weight:bold;
-}
-.high{background:#7f1d1d;}
-.medium{background:#92400e;}
-.low{background:#065f46;}
-</style>
-</head>
-
-<body>
-
-<div class="layout">
-
-<!-- LEFT PANEL -->
-<!-- <div>
-  <div class="card">
-    <h2>Milestone 4: Risk Classification & Reporting</h2>
-    <ul>
-      <li>Risk thresholds</li>
-      <li>Visual risk highlighting</li>
-      <li>CSV & PDF reports</li>
-      <li>System validation</li>
-    </ul>
-  </div>
-
-  <div class="card">
-    <h3>Project Completion Status</h3>
-    <canvas id="progressChart"></canvas>
-  </div>
-</div>
-
-<!-- RIGHT PANEL -->
-<!-- <div>
-  <div class="card">
-    <h2>📊 Risk Classification Dashboard</h2>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-      <div>
-        <h3>🔴 High Risk</h3>
-        <div id="high"></div>
-      </div>
-      <div>
-        <h3>🟡 Medium Risk</h3>
-        <div id="medium"></div>
-      </div>
-      <div>
-        <h3>🟢 Low Risk</h3>
-        <div id="low"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>📑 Risk Summary Report</h3>
-    <p id="summary"></p>
-     <canvas id="donut" height="180"></canvas>
-  </div>
-  <button onclick="window.location='/export/csv'">⬇ Export CSV</button>
-  <button onclick="window.location='/export/pdf'">⬇ Export PDF</button>
-</div>
-
-</div>
-
-<script>
-fetch("/api/risk-data")
-.then(res=>res.json())
-.then(d=>{
-  ["high","medium","low"].forEach(r=>{
-    d[r].forEach(c=>{
-      document.getElementById(r).innerHTML +=
-      `<div class="badge ${r}">
-        ${c.Crypto}<br>${(c.Volatility*100).toFixed(2)}%
-      </div>`;
-    })
-  });
-
-  document.getElementById("summary").innerHTML =
-  `Total: ${d.summary.total}<br>
-   Avg Volatility: ${d.summary.avg_vol}%<br>
-   ${d.summary.high} High / ${d.summary.medium} Medium / ${d.summary.low} Low`;
-
-  new Chart(document.getElementById("donut"),{
-    type:"doughnut",
-    data:{
-      labels:["High","Medium","Low"],
-      datasets:[{
-        data:[d.summary.high,d.summary.medium,d.summary.low],
-        backgroundColor:["#dc2626","#f59e0b","#22c55e"]
-      }]
-    }
-  });
-
-  new Chart(document.getElementById("progressChart"),{
-    type:"bar",
-    data:{
-      labels:["M1","M2","M3","M4"],
-      datasets:[{data:[100,100,100,100],backgroundColor:"#22c55e"}]
-    },
-    options:{scales:{y:{max:100}}}
-  });
-});
-</script>
-
-</body>
-</html> --> 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -204,10 +68,6 @@ fetch("/api/risk-data")
           width:100%
       }
       .page-title {
-        /* display: block;
-        white-space: nowrap;
-        overflow: visible; */
-        
         align-items: center;
         margin-left: 120px;
         font-size: 32px;
@@ -345,4 +205,5 @@ new Chart(document.getElementById("progressChart"), {
 
 </body>
 </html>
+
 
