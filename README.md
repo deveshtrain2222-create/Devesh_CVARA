@@ -1,4 +1,4 @@
-# 📊 Crypto Volatility and Risk Analyzer
+## 📊 Crypto Volatility and Risk Analyzer  (CVARA)
 
 A data-driven dashboard to analyze cryptocurrency price volatility, risk metrics, and risk classification using historical market data.
 
@@ -95,6 +95,57 @@ cd crypto-volatility-risk-analyzer``
 
 ### 4️⃣ Open in Browser
 ``http://127.0.0.1:5000``
+
+---
+
+## 📊 Key Features
+
+ ⚫ Multi-cryptocurrency selection
+  
+ ⚫Interactive price and volatility charts
+  
+ ⚫ Risk–Return analysis
+  
+ ⚫ Automated risk classification
+  
+ ⚫ Risk distribution visualization
+  
+ ⚫ CSV & PDF report generation
+  
+ ⚫ Modern glassmorphism UI
+
+ ---
+
+## 📄 Reports
+
+⚫ CSV Report: Exportable structured data for analysis
+
+⚫ PDF Report: Summarized risk report for academic use
+
+---
+
+
+## ✅ Conclusion
+
+### This project provides a complete pipeline for:
+
+     ⚫   Financial data analysis
+        
+     ⚫   Risk evaluation
+        
+     ⚫   Interactive visualization
+        
+     ⚫   Professional reporting
+
+### It demonstrates practical application of data analytics, finance, and visualization concepts in the cryptocurrency domain.
+
+---
+
+
+## 👨‍💻 Author
+
+### Devesh Gautam
+### B.Tech – Computer Science & Engineering
   
   
 
