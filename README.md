@@ -85,8 +85,9 @@ crypto-volatility-risk-analyzer/
 ## 🚀 How to Run the Project'
 ### 1️⃣ Clone the Repository
 ``
-git clone https://github.com/<your-username>/crypto-volatility-risk-analyzer.git
-cd crypto-volatility-risk-analyzer``
+git clone [https://github.com/<your-username>/crypto-volatility-risk-analyzer.git](https://github.com/deveshtrain2222-create/Devesh_CVARA.git)``
+
+``cd crypto-volatility-risk-analyzer``
 ### 2️⃣ Install Dependencies
 ``pip install -r requirements.txt``
 
