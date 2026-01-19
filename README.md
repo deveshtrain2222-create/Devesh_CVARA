@@ -116,6 +116,21 @@ cd crypto-volatility-risk-analyzer``
 
  ---
 
+ ## Different Diagrams
+ 
+### 1.
+<img width="1115" height="562" alt="image" src="https://github.com/user-attachments/assets/420ad318-ac15-4ea8-9391-e9a840e63890" />
+
+### 2.
+<img width="1030" height="449" alt="image" src="https://github.com/user-attachments/assets/88c09cd8-09ff-4e29-8e1a-1a4a35d90c9d" />
+
+### 3.
+<img width="1113" height="464" alt="image" src="https://github.com/user-attachments/assets/1aaeb8c8-a6b4-4540-a754-2e46bf8e69eb" />
+
+
+---
+
+
 ## 📄 Reports
 
 ⚫ CSV Report: Exportable structured data for analysis
