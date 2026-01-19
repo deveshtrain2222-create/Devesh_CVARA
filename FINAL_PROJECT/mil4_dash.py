@@ -65,34 +65,7 @@ def fetch_data(days=30):
     except:
         return pd.DataFrame()
 
-# ================= CARD UI =================
-def risk_card(title, df, color):
-    if df.empty:
-        return dbc.Card(
-            dbc.CardBody("No data"),
-            style={"backgroundColor": "#02050B", "color": "#9ca3af"}
-        )
 
-    return dbc.Card(
-        dbc.CardBody([
-            
-            *[
-                html.Div(
-                    f"{row.coin} : {row.volatility:.2f}%",
-                    style={
-                        "background": color,
-                        "padding": "6px",
-                        "borderRadius": "6px",
-                        "marginBottom": "6px",
-                        "color": "white",
-                        "fontWeight": "600"
-                    }
-                )
-                for _, row in df.iterrows()
-            ]
-        ]),
-        style={**GLASS, "padding":"14px"},
-    )
 
 # ================= INIT DASH =================
 def init_dash(flask_app):
@@ -265,16 +238,39 @@ def init_dash(flask_app):
         low = df[df.volatility < 30]
 
         # when building cards, use coin_display field
+        # ================= CARD UI =================
         def risk_card(title, df_part, color):
             if df_part.empty:
                 return dbc.Card(
-                    dbc.CardBody("No data"),
-                    style={"backgroundColor": "#02050B", "color": "#9ca3af"}
+                    dbc.CardBody([
+                        html.H5(title, style={
+                            "textAlign": "center",
+                            "marginBottom": "10px",
+                            "color": color,
+                            "fontWeight": "700"
+                        }),
+                        html.P("No data", style={"textAlign": "center", "color": "#9ca3af"})
+                    ]),
+                    style={**GLASS, "padding": "14px"}
                 )
 
             return dbc.Card(
                 dbc.CardBody([
-                    
+                    # 🔥 HEADING
+                    html.H5(
+                        title,
+                        style={
+                            "textAlign": "center",
+                            "marginBottom": "12px",
+                            "color": color,
+                            "fontWeight": "700",
+                            "letterSpacing": "0.5px"
+                        }
+                    ),
+
+                    html.Hr(style={"borderColor": "rgba(255,255,255,0.15)"}),
+
+                    # 🔥 COIN LIST
                     *[
                         html.Div(
                             f"{row.coin_display} : {row.volatility:.2f}%",
@@ -284,13 +280,14 @@ def init_dash(flask_app):
                                 "borderRadius": "6px",
                                 "marginBottom": "6px",
                                 "color": "white",
-                                "fontWeight": "600"
+                                "fontWeight": "600",
+                                "textAlign": "center"
                             }
                         )
                         for _, row in df_part.iterrows()
                     ]
                 ]),
-                style={**GLASS, "padding":"14px"},
+                style={**GLASS, "padding": "14px"},
             )
 
         fig = go.Figure(go.Pie(

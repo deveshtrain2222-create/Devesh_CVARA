@@ -10,8 +10,8 @@ from datetime import datetime
 
 
 
-from mil3 import init_dash as init_dash_m3
-from mil4 import init_dash as init_dash_m4
+from mil3_dash import init_dash as init_dash_m3
+from mil4_dash import init_dash as init_dash_m4
 
 
 
