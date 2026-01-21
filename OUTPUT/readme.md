@@ -1,4 +1,4 @@
-**Below are the outputs of my " FINAL_PROJECT "**
+**Below are the outputs of my " FINAL_PROJECT " & its Database**
 
 **HOME PAGE**
 <img width="1886" height="913" alt="image" src="https://github.com/user-attachments/assets/2623bb0d-56ac-468a-9d12-19f44abcc1f6" />
@@ -46,4 +46,14 @@ CSV-REPORT
 PDF-REPORT
 
 <img width="718" height="407" alt="image" src="https://github.com/user-attachments/assets/d10a50b0-ea07-42db-b7a2-06e2a3f9ffd1" />
+
+...
+
+Database
+
+<img width="781" height="602" alt="image" src="https://github.com/user-attachments/assets/87479ccc-cece-4057-9455-3717df91d06c" />
+
+<img width="379" height="368" alt="image" src="https://github.com/user-attachments/assets/79fcb5ac-32be-4557-803e-1a4bdf407c2b" />
+
+
   
