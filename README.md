@@ -188,13 +188,22 @@ The project follows a milestone-based architecture, covering data ingestion, dat
 
 (API → Database → Processing → Dashboard)
 
+<img width="1153" height="322" alt="image" src="https://github.com/user-attachments/assets/5785e257-27ef-40fe-b0e5-de53bc7f70d9" />
+
+
 ### 2️⃣ Architecture Diagram
 
 (Flask + Database + Dash)
 
+<img width="453" height="319" alt="image" src="https://github.com/user-attachments/assets/48ab8146-ab56-4feb-88d0-81b7de39d7eb" />
+
+
 ### 3️⃣ Database Schema Diagram
 
 (Cryptocurrency, PriceData, RiskMetrics relationships)
+
+<img width="459" height="320" alt="image" src="https://github.com/user-attachments/assets/dc61a490-0fbf-406c-8693-00d9378316ce" />
+
 
 ---
 
@@ -219,7 +228,8 @@ The project follows a milestone-based architecture, covering data ingestion, dat
 
 ### It showcases practical application of databases, financial analytics, and data visualization in the cryptocurrency domain.
 
+---
+
 ## 👨‍💻 Author
 ## Devesh Gautam
-
-### B.Tech – Computer Science & Engineering
+`` B.Tech – Computer Science & Engineering``
