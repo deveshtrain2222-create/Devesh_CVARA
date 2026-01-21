@@ -6,6 +6,9 @@ import plotly.graph_objects as go
 from dash import dcc, html, Input, Output
 import os
 
+from db import get_db
+
+
 FLASK_URL = "http://127.0.0.1:5000"
 
 COIN_MAP = {
@@ -31,33 +34,67 @@ GLASS_STYLE = {
                 }
 DATA_DIR = "data"
 
-def load_price_series(coin_id, start_date, end_date, window=14):
-    file_path = os.path.join(DATA_DIR, f"milestone1_{coin_id}_history.csv")
+def load_price_series_db(coin, start_date, end_date, window=14):
+    conn = get_db()
 
-    if not os.path.exists(file_path):
-        return pd.DataFrame()
+    q = """
+    SELECT date, price FROM price_history
+    WHERE coin_id = (
+        SELECT coin_id FROM coins WHERE coin_name=?
+    )
+    AND date BETWEEN ? AND ?
+    ORDER BY date
+    """
 
-    df = pd.read_csv(file_path)
+    start_str = pd.to_datetime(start_date).strftime("%Y-%m-%d")
+    end_str = pd.to_datetime(end_date).strftime("%Y-%m-%d")
+
+    df = pd.read_sql(q, conn, params=(coin, start_str, end_str))
+    conn.close()
+
+    if df.empty:
+        return df
+
     df["date"] = pd.to_datetime(df["date"])
-    df = df.set_index("date").sort_index()
-
-    # 🔥 LOAD EXTRA DAYS BEFORE START
-    buffer_days = window * 2
-    buffered_start = start_date - pd.Timedelta(days=buffer_days)
-
-    df = df.loc[buffered_start:end_date]
+    df = df.set_index("date")
 
     df["returns"] = df["price"].pct_change()
     df["volatility"] = (
-        df["returns"]
-        .rolling(window=window)
-        .std() * np.sqrt(365) * 100
+        df["returns"].rolling(window=window).std()
+        * np.sqrt(365) * 100
     )
 
-    # 🔥 FINAL CUT → ONLY USER RANGE
-    df = df.loc[start_date:end_date]
-
     return df.dropna()
+
+
+
+# def load_price_series(coin_id, start_date, end_date, window=14):
+#     file_path = os.path.join(DATA_DIR, f"milestone1_{coin_id}_history.csv")
+
+#     if not os.path.exists(file_path):
+#         return pd.DataFrame()
+
+#     df = pd.read_csv(file_path)
+#     df["date"] = pd.to_datetime(df["date"])
+#     df = df.set_index("date").sort_index()
+
+#     # 🔥 LOAD EXTRA DAYS BEFORE START
+#     buffer_days = window * 2
+#     buffered_start = start_date - pd.Timedelta(days=buffer_days)
+
+#     df = df.loc[buffered_start:end_date]
+
+#     df["returns"] = df["price"].pct_change()
+#     df["volatility"] = (
+#         df["returns"]
+#         .rolling(window=window)
+#         .std() * np.sqrt(365) * 100
+#     )
+
+#     # 🔥 FINAL CUT → ONLY USER RANGE
+#     df = df.loc[start_date:end_date]
+
+#     return df.dropna()
 
 
 
@@ -201,7 +238,9 @@ def init_dash(flask_app):
         fig_vol = go.Figure()
         fig_scatter = go.Figure()
 
-        btc_df = load_price_series("bitcoin", start, end, window=14)
+        # btc_df = load_price_series("bitcoin", start, end, window=14)
+        btc_df = load_price_series_db("bitcoin", start, end)
+
         btc_returns = btc_df["returns"]
 
 
@@ -211,7 +250,9 @@ def init_dash(flask_app):
             coin_name = COIN_MAP[coin_code]
             coin_id = coin_name.lower()
 
-            df = load_price_series(coin_id, start, end, window=14)
+            # df = load_price_series(coin_id, start, end, window=14)
+            df = load_price_series_db(coin_id, start, end)
+
 
             if df.empty:
                 continue
@@ -246,6 +287,7 @@ def init_dash(flask_app):
                 np.cov(df["returns"], btc_returns)[0][1] /
                 np.var(btc_returns)
             ) if np.var(btc_returns) else 0
+            
 
 
             fig_scatter.add_trace(
@@ -288,11 +330,17 @@ def init_dash(flask_app):
             title="Price & Volatility Trends",
             template="plotly_dark",
 
+            # xaxis=dict(
+            #     title="Date",
+            #     range=[start, end],
+            #     showgrid=False
+            # ),
             xaxis=dict(
                 title="Date",
-                range=[start, end],
+                range=[df.index.min(), df.index.max()],
                 showgrid=False
             ),
+
 
             yaxis=dict(
                 title="Price",
