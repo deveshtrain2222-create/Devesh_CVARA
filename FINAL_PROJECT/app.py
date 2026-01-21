@@ -21,6 +21,12 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 from threading import Lock
 
+from db import get_db
+from db import create_tables
+
+create_tables()
+
+
 app = Flask(__name__)
 
 #🟢 QUICK MEMORY TRICK
@@ -169,49 +175,130 @@ def history():
     return jsonify({"dates": dates, "prices": prices})
 # ---------------- MILESTONE 1 ---------------- 
 # Generate & save historical price CSV (365 days base data) 
-def generate_history_csv(coin, days):
-    url = f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart"
-    file_path = os.path.join(DATA_DIR, f"milestone1_{coin}_history.csv")
+# def generate_history_csv(coin, days):
+#     url = f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart"
+#     file_path = os.path.join(DATA_DIR, f"milestone1_{coin}_history.csv")
 
-    # 🛑 prevent re-fetch
-    if os.path.exists(file_path):
-        return True
+#     # 🛑 prevent re-fetch
+#     if os.path.exists(file_path):
+#         return True
          
-    params = {"vs_currency": "usd", "days": days} 
-    r = requests.get(
-                url,
-                params=params,
-                headers={"x-cg-demo-api-key": API_KEY},
-                timeout=15
-            )
+#     params = {"vs_currency": "usd", "days": days} 
+#     r = requests.get(
+#                 url,
+#                 params=params,
+#                 headers={"x-cg-demo-api-key": API_KEY},
+#                 timeout=15
+#             )
  
-    if r.status_code != 200: return False
-    raw = r.json().get("prices", []) 
-    if not raw: return False 
-    df = pd.DataFrame(raw, columns=["time", "price"])
-    df["date"] = pd.to_datetime(df["time"], unit="ms") 
-    df = df[["date", "price"]]
-    df["coin"] = coin 
-    file_path = os.path.join(DATA_DIR, f"milestone1_{coin}_history.csv")
-    df.to_csv(file_path, index=False)
-    return True
+#     if r.status_code != 200: return False
+#     raw = r.json().get("prices", []) 
+#     if not raw: return False 
+#     df = pd.DataFrame(raw, columns=["time", "price"])
+#     df["date"] = pd.to_datetime(df["time"], unit="ms") 
+#     df = df[["date", "price"]]
+#     df["coin"] = coin 
+#     file_path = os.path.join(DATA_DIR, f"milestone1_{coin}_history.csv")
+#     df.to_csv(file_path, index=False)
+#     return True
+
+
+
+
+
+
+def save_price_history(conn, coin, days=365):
+    cur = conn.cursor()
+
+    # coin master
+    cur.execute("SELECT coin_id FROM coins WHERE coin_name=?", (coin,))
+    row = cur.fetchone()
+
+    if not row:
+        cur.execute(
+            "INSERT INTO coins (coin_name, symbol) VALUES (?,?)",
+            (coin, coin[:3].upper())
+        )
+        coin_id = cur.lastrowid
+    else:
+        coin_id = row[0]
+
+    r = requests.get(
+        f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart",
+        params={"vs_currency": "usd", "days": days},
+        headers={"x-cg-demo-api-key": API_KEY},
+        timeout=15
+    )
+
+    prices = r.json().get("prices", [])
+
+    for p in prices:
+        date = datetime.fromtimestamp(p[0]/1000).strftime("%Y-%m-%d")
+        price = p[1]
+
+        cur.execute("""
+        SELECT 1 FROM price_history
+        WHERE coin_id=? AND date=?
+        """, (coin_id, date))
+
+        if not cur.fetchone():
+            cur.execute("""
+            INSERT INTO price_history (coin_id, date, price)
+            VALUES (?,?,?)
+            """, (coin_id, date, price))
+
+
+
+def init_database_data():
+    conn = get_db()
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout = 5000;")
+
+    for coin in COINS:
+        save_price_history(conn, coin, days=365)
+
+    conn.commit()
+    conn.close()
+
+
 
 
 # ---------------- MILESTONE 2 ----------------
 # Load Milestone 1 data + apply day filter
 
-def load_milestone1_data(coin, days):
-    file_path = os.path.join(DATA_DIR, f"milestone1_{coin}_history.csv")
+# def load_milestone1_data(coin, days):
+#     file_path = os.path.join(DATA_DIR, f"milestone1_{coin}_history.csv")
 
-    # Auto-generate if missing
-    if not os.path.exists(file_path):
-        generate_history_csv(coin, days=365)
+#     # Auto-generate if missing
+#     if not os.path.exists(file_path):
+#         generate_history_csv(coin, days=365)
 
-    df = pd.read_csv(file_path)
-    df["date"] = pd.to_datetime(df["date"])
+#     df = pd.read_csv(file_path)
+#     df["date"] = pd.to_datetime(df["date"])
 
-    # Apply 30 / 90 / 365 days logic
-    df = df.sort_values("date").tail(days)
+#     # Apply 30 / 90 / 365 days logic
+#     df = df.sort_values("date").tail(days)
+
+#     df["returns"] = df["price"].pct_change()
+#     return df.dropna()
+
+
+
+
+def load_price_from_db(coin, days):
+    from db import get_db
+    
+    conn = get_db()
+    q = """
+    SELECT date, price FROM price_history
+    WHERE coin_id = (
+        SELECT coin_id FROM coins WHERE coin_name=?
+    )
+    ORDER BY date DESC
+    LIMIT ?
+    """
+    df = pd.read_sql(q, conn, params=(coin, days))
+    conn.close()
 
     df["returns"] = df["price"].pct_change()
     return df.dropna()
@@ -232,7 +319,7 @@ def risk_metrics():
     now = time.time()
     if days in CACHE["risk"]["data"] and now - CACHE["risk"]["time"] < CACHE_TTL_RISK:
         return jsonify(CACHE["risk"]["data"][days])
-    btc_df = load_milestone1_data("bitcoin", days)
+    btc_df = load_price_from_db("bitcoin", days)
     btc_returns = btc_df["returns"]
 
     metrics = {
@@ -246,7 +333,11 @@ def risk_metrics():
     table = []
 
     for coin in COINS:
-        df = load_milestone1_data(coin, days)
+        # df = load_milestone1_data(coin, days)
+        df = load_price_from_db(coin, days)
+        if df.empty:
+            continue
+
         returns = df["returns"]
 
         volatility = returns.std() * np.sqrt(365) * 100
@@ -317,20 +408,28 @@ def dashboard_metrics():
 def index():
     return render_template("Base.html", )
 
+# @app.route("/milestone1")
+# def milestone1():
+#     missing = []
+
+#     for coin in COINS:
+#         file_path = os.path.join(DATA_DIR, f"milestone1_{coin}_history.csv")
+
+#         # ⚡ already exists → skip API
+#         if not os.path.exists(file_path):
+#             generate_history_csv(coin, days=365)
+#             missing.append(coin)
+
+#     print("Generated for:", missing)
+#     return render_template("milestone1.html")
+
+
 @app.route("/milestone1")
 def milestone1():
-    missing = []
-
-    for coin in COINS:
-        file_path = os.path.join(DATA_DIR, f"milestone1_{coin}_history.csv")
-
-        # ⚡ already exists → skip API
-        if not os.path.exists(file_path):
-            generate_history_csv(coin, days=365)
-            missing.append(coin)
-
-    print("Generated for:", missing)
     return render_template("milestone1.html")
+
+
+
 @app.route("/milestone2")
 def milestone2():
     return render_template("milestone2.html" )  
@@ -345,20 +444,39 @@ def milestone4():
     return render_template("milestone4.html")
 
 
-@app.route("/api/refresh-data")
-def refresh_data():
+# @app.route("/api/refresh-data")
+# def refresh_data():
     
-    status = {}
+#     status = {}
+
+#     for coin in COINS:
+#         success = generate_history_csv(coin, days=365)
+#         status[coin] = "ok" if success else "failed"
+
+#     return jsonify(status)
+
+def init_database_data():
+    conn = get_db()
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout = 5000;")
 
     for coin in COINS:
-        success = generate_history_csv(coin, days=365)
-        status[coin] = "ok" if success else "failed"
+        save_price_history(conn, coin, days=365)
 
-    return jsonify(status)
+    conn.commit()
+    conn.close()
+
+
+
+
+
 # ---------- INIT DASH ----------
   
 init_dash_m3(app)   # url: /dash3/
 init_dash_m4(app)   # url: /dash4/
+
+# 🔥 CALL IT ONCE
+init_database_data()
 
 
 # =====================================================
