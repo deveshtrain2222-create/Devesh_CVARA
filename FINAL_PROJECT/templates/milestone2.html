@@ -317,26 +317,6 @@ const SYMBOL_MAP = {
   
 let riskChart;
 
-/* Load data from Flask */
-async function loadData(days){
-  const status = document.getElementById("status");
-  const updatedTime = document.getElementById("updatedTime");
-
-  status.innerHTML = "<span class='loader'></span> Fetching latest data…";
-
-  const res = await fetch(`/api/risk-metrics?days=${days}`);
-  const data = await res.json();
-
-  updateTable(data.table);
-  updateChart(data.metrics);
-
-
-  
-  // ✅ STOP LOADER
-  status.innerHTML = "✔ Data updated successfully";
-  updatedTime.innerHTML = "Last Updated: " + new Date().toLocaleString();
-
-}
 
 /* Update table */
 function updateTable(rows){
@@ -434,6 +414,8 @@ let currentDays = 30;
 /* ================================
    LOAD DATA
 ================================ */
+
+/* Load data from Flask */
 async function loadData(days){
   const status = document.getElementById("status");
   const updatedTime = document.getElementById("updatedTime");
@@ -446,9 +428,14 @@ async function loadData(days){
   updateTable(data.table);
   updateChart(data.metrics);
 
+
+  
+  // ✅ STOP LOADER
   status.innerHTML = "✔ Data updated successfully";
   updatedTime.innerHTML = "Last Updated: " + new Date().toLocaleString();
+
 }
+
 
 /* ================================
    BUTTON HANDLERS

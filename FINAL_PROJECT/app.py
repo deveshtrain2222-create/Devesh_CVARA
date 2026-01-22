@@ -24,7 +24,8 @@ from threading import Lock
 from db import get_db
 from db import create_tables
 
-create_tables()
+if not os.path.exists("crypto.db"):
+    create_tables()
 
 
 app = Flask(__name__)
@@ -60,8 +61,8 @@ VS_CURRENCY = "usd"
 
 RISK_FREE_RATE = 0.04   # 4% yearly (used in Sharpe ratio)
 TRADING_DAYS = 365
-DATA_DIR = "data"
-os.makedirs(DATA_DIR, exist_ok=True)
+# DATA_DIR = "data"
+# os.makedirs(DATA_DIR, exist_ok=True)
 
 
 # =====================================================
@@ -158,8 +159,11 @@ def history():
             # ✅ TAKE 1 DATA POINT PER DAY (EVERY 24 HOURS)
             daily_prices = raw[::24][:7]
 
+            
             dates = [f"Day{i+1}" for i in range(len(daily_prices))]
+
             prices[coin] = [round(p[1], 2) for p in daily_prices]
+            
 
 
             CACHE["history"][coin] = {
