@@ -310,7 +310,7 @@ def init_dash(flask_app):
 
         # Risk classification
         df_report["risk"] = df_report["volatility"].apply(
-            lambda v: "High" if v >= 60 else ("Medium" if v >= 30 else "Low")
+            lambda v: "High" if v >= 70 else ("Medium" if v >= 35 else "Low")
         )
 
         # Coin Name mapping (code → full name)
