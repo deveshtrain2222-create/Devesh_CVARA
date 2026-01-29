@@ -277,9 +277,9 @@ def init_dash(flask_app):
 
             avg_vol = df["volatility"].mean()
             avg_return = df["returns"].mean() * 365
-            # Sharpe (correct)
+            # Sharpe using risk-free rate (annualized)
             vol_decimal = avg_vol / 100
-            sharpe = avg_return / vol_decimal if vol_decimal else 0
+            sharpe = (avg_return - 0.04) / vol_decimal if vol_decimal else 0
 
 
             # ✅ Correct Beta

@@ -233,9 +233,9 @@ def init_dash(flask_app):
                 no_update
             )
 
-        high = df[df.volatility >= 60]
-        medium = df[(df.volatility >= 30) & (df.volatility < 60)]
-        low = df[df.volatility < 30]
+        high = df[df.volatility >= 70]
+        medium = df[(df.volatility >= 35) & (df.volatility < 70)]
+        low = df[df.volatility < 35]
 
         # when building cards, use coin_display field
         # ================= CARD UI =================

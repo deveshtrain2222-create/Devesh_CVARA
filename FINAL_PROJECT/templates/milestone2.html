@@ -462,21 +462,7 @@ document.querySelectorAll(".filter-btn").forEach(btn=>{
 loadData(currentDays);
 
 
-const dashLink = document.getElementById("openDash");
-
-function updateDashLink() {
-  dashLink.href = `/milestone3?days=${currentDays}`;
-}
-
-// 🔁 update link whenever button clicked
-document.querySelectorAll(".filter-btn").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    updateDashLink();
-  });
-});
-
-// initial
-updateDashLink();
+// NOTE: removed unused dash link update (no element with id="openDash")
 </script>
 
 
