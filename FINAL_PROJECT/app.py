@@ -234,9 +234,33 @@ def save_risk_metrics_snapshot(cur, coin, days, metrics, computed_at):
         metrics["var"]
     ))
 
+def save_risk_classification_snapshot(cur, coin, days, metrics, computed_at, risk_label):
+    coin_id = ensure_coin_id(cur, coin)
+    cur.execute("""
+    INSERT INTO risk_classification_snapshot (
+        coin_id, days, computed_at, volatility, sharpe, beta, var, risk
+    )
+    VALUES (?,?,?,?,?,?,?,?)
+    """, (
+        coin_id,
+        days,
+        computed_at,
+        metrics["volatility"],
+        metrics["sharpe"],
+        metrics["beta"],
+        metrics["var"],
+        risk_label
+    ))
+
 def cleanup_risk_metrics_snapshot(cur, cutoff_dt):
     cur.execute("""
     DELETE FROM risk_metrics_snapshot
+    WHERE computed_at < ?
+    """, (cutoff_dt,))
+
+def cleanup_risk_classification_snapshot(cur, cutoff_dt):
+    cur.execute("""
+    DELETE FROM risk_classification_snapshot
     WHERE computed_at < ?
     """, (cutoff_dt,))
 
@@ -251,6 +275,28 @@ def save_risk_snapshot(rows, days, computed_at):
                 save_risk_metrics_snapshot(cur, coin_name, days, row, computed_at)
             cutoff_dt = (datetime.now(UTC) - timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
             cleanup_risk_metrics_snapshot(cur, cutoff_dt)
+            conn.commit()
+        finally:
+            conn.close()
+
+def save_risk_classification_snapshot_rows(rows, days, computed_at):
+    with db_write_lock:
+        conn = get_db()
+        try:
+            cur = conn.cursor()
+            for row in rows:
+                coin_name = REVERSE_SYMBOL_MAP.get(row["coin"], row["coin"].lower())
+                # Use same thresholds as Milestone 4 UI
+                vol = row.get("volatility", 0) or 0
+                if vol >= 70:
+                    risk = "High"
+                elif vol >= 35:
+                    risk = "Medium"
+                else:
+                    risk = "Low"
+                save_risk_classification_snapshot(cur, coin_name, days, row, computed_at, risk)
+            cutoff_dt = (datetime.now(UTC) - timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+            cleanup_risk_classification_snapshot(cur, cutoff_dt)
             conn.commit()
         finally:
             conn.close()
@@ -283,10 +329,21 @@ def compute_risk_payload(days):
             (returns.mean() * 365 - RISK_FREE_RATE) /
             (returns.std() * np.sqrt(365))
         ) if returns.std() else 0
-        beta = (
-            np.cov(returns, btc_returns)[0][1] /
-            np.var(btc_returns)
-        ) if np.var(btc_returns) else 0
+        # Align coin/BTC returns on date index to avoid length mismatch.
+        aligned_returns = pd.concat(
+            [returns, btc_returns],
+            axis=1,
+            join="inner"
+        ).dropna()
+        if aligned_returns.empty or len(aligned_returns) < 2:
+            beta = 0
+        else:
+            coin_ret = aligned_returns.iloc[:, 0]
+            btc_ret = aligned_returns.iloc[:, 1]
+            beta = (
+                np.cov(coin_ret, btc_ret)[0][1] /
+                np.var(btc_ret)
+            ) if np.var(btc_ret) else 0
         var95 = abs(np.percentile(returns, 5)) * 100
 
         symbol = SYMBOL_MAP.get(coin, coin.upper())
@@ -670,6 +727,7 @@ def risk_metrics():
 
     computed_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     save_risk_snapshot(payload["table"], days, computed_at)
+    save_risk_classification_snapshot_rows(payload["table"], days, computed_at)
 
     CACHE["risk"]["data"][days] = payload
     CACHE["risk"]["time"] = now
@@ -784,6 +842,8 @@ def init_history():
 # =====================================================
 @app.route("/")
 def home():
+    if "id" in session:
+        return redirect(url_for("Base"))
     return redirect(url_for("auth"))
 
 @app.route("/Base")

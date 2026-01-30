@@ -34,6 +34,38 @@ GLASS_STYLE = {
                 }
 DATA_DIR = "data"
 
+def save_dashboard_timeseries_snapshot(rows, start_date, end_date, computed_at):
+    if not rows:
+        return
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        for row in rows:
+            cur.execute("""
+            INSERT INTO dashboard_timeseries_snapshot (
+                coin_id, start_date, end_date, computed_at,
+                avg_volatility, avg_return, sharpe, beta
+            )
+            VALUES (?,?,?,?,?,?,?,?)
+            """, (
+                row["coin_id"],
+                start_date,
+                end_date,
+                computed_at,
+                row["avg_volatility"],
+                row["avg_return"],
+                row["sharpe"],
+                row["beta"]
+            ))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_coin_id(cur, coin_name):
+    cur.execute("SELECT coin_id FROM coins WHERE coin_name=?", (coin_name,))
+    row = cur.fetchone()
+    return row[0] if row else None
+
 def load_price_series_db(coin, start_date, end_date, window=14):
     conn = get_db()
 
@@ -245,6 +277,7 @@ def init_dash(flask_app):
 
 
         vols, sharpes, betas = [], [], []
+        snapshot_rows = []
 
         for coin_code in selected_coins:
             coin_name = COIN_MAP[coin_code]
@@ -282,11 +315,21 @@ def init_dash(flask_app):
             sharpe = (avg_return - 0.04) / vol_decimal if vol_decimal else 0
 
 
-            # ✅ Correct Beta
-            beta = (
-                np.cov(df["returns"], btc_returns)[0][1] /
-                np.var(btc_returns)
-            ) if np.var(btc_returns) else 0
+            # Align series on dates before covariance to avoid length mismatch.
+            aligned_returns = pd.concat(
+                [df["returns"], btc_returns],
+                axis=1,
+                join="inner"
+            ).dropna()
+            if aligned_returns.empty or len(aligned_returns) < 2:
+                beta = 0
+            else:
+                coin_ret = aligned_returns.iloc[:, 0]
+                btc_ret = aligned_returns.iloc[:, 1]
+                beta = (
+                    np.cov(coin_ret, btc_ret)[0][1] /
+                    np.var(btc_ret)
+                ) if np.var(btc_ret) else 0
             
 
 
@@ -325,6 +368,14 @@ def init_dash(flask_app):
             vols.append(avg_vol)
             sharpes.append(sharpe)
             betas.append(beta)
+            # Save minimal snapshot metrics per coin for milestone 3
+            snapshot_rows.append({
+                "coin_name": coin_id,
+                "avg_volatility": float(avg_vol) if not np.isnan(avg_vol) else 0,
+                "avg_return": float(avg_return) if not np.isnan(avg_return) else 0,
+                "sharpe": float(sharpe) if not np.isnan(sharpe) else 0,
+                "beta": float(beta) if not np.isnan(beta) else 0
+            })
 
             fig_vol.update_layout(
             title="Price & Volatility Trends",
@@ -390,6 +441,29 @@ def init_dash(flask_app):
             kpi_block(f"{np.mean(betas) if betas else 0:.2f}", "Beta vs BTC"),
             kpi_block("Low" if np.mean(vols)<30 else "Medium" if np.mean(vols)<60 else "High","Risk Level")
         ]
+
+        # Persist snapshot once per callback (best-effort)
+        try:
+            if snapshot_rows:
+                conn = get_db()
+                try:
+                    cur = conn.cursor()
+                    rows_with_ids = []
+                    for row in snapshot_rows:
+                        coin_db_id = get_coin_id(cur, row["coin_name"])
+                        if not coin_db_id:
+                            continue
+                        row_with_id = {**row, "coin_id": coin_db_id}
+                        rows_with_ids.append(row_with_id)
+                finally:
+                    conn.close()
+                if rows_with_ids:
+                    computed_at = pd.Timestamp.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                    start_str = pd.to_datetime(start_date).strftime("%Y-%m-%d")
+                    end_str = pd.to_datetime(end_date).strftime("%Y-%m-%d")
+                    save_dashboard_timeseries_snapshot(rows_with_ids, start_str, end_str, computed_at)
+        except Exception:
+            pass
 
         return fig_vol, fig_scatter, kpis
 
